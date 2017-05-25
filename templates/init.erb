@@ -106,7 +106,21 @@ stop() {
     fi
   fi
 
-  kill `cat "$PID_FILE"`;
+  pid=`cat $PID_FILE`
+  # Try issuing SIGTERM
+  kill -15 $pid
+
+  count=0;
+  wait=30;
+  until [ `ps --pid $pid 2> /dev/null | grep -c $pid 2> /dev/null` -eq '0' ] || [ $count -gt $wait ]; do
+    sleep 1
+    let count=$count+1;
+  done
+
+  if [ $count -gt $wait ]; then
+    kill -9 $pid
+  fi
+  
   rm -f -- "$PID_FILE";
   echo "$NAME stopped"
   return 0
